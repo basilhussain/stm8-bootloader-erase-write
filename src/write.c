@@ -5,6 +5,8 @@ static void write_byte(const uint8_t data, const uint16_t idx);
 
 /******************************************************************************/
 
+// NOTE: this code is only compatible with 128K devices with ROM bootloader version 2.4.
+
 // TODO: this code too big! needs to be 10 bytes smaller!
 // break in to smaller sub-functions, some of which are placed in further sections of RAM, beyond 0x1FF?
 
