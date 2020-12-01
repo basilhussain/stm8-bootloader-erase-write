@@ -31,6 +31,9 @@ typedef struct {
 	uint16_t hl; // high & low bytes
 } addr_t;
 
+
+// NOTE: locations of global variables are only compatible with 128K devices with ROM bootloader version 2.4.
+
 // Function in bootloader ROM (at 0x608A) that refreshes the watchdog.
 // Location is specified at link time (-Wl-g_watchdog_refresh=0x608A).
 extern void watchdog_refresh(void);
