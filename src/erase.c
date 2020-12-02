@@ -16,9 +16,6 @@ static void erase_block(void);
 
 /******************************************************************************/
 
-// TODO: this code is too big! needs to be 4 bytes smaller!
-// break in to smaller sub-functions, some of which are placed in further sections of RAM, beyond 0x1FF?
-
 void erase(void) {
 	global_0x90 = 0;
 	global_0x9b = 0;
@@ -36,42 +33,37 @@ void erase(void) {
 	
 	while(global_0x90 < global_0x88) {
 		// Get next sector number from buffer.
-		uint8_t sector = global_0x00[global_0x90];
+		const uint8_t sector = global_0x00[global_0x90];
 
 		// Translate 'sector code' (see UM0560 section 3.7) into address in EEPROM or flash.
 #if defined(VER_32K)
+		global_0x8a.e = 0;
 		if(sector == 0x20) {
 			// EEPROM addr >= 0x004000
-			global_0x8a.e = 0;
 			global_0x8a.hl = 0x4000;
 		} else {
 			// Flash addr >= 0x00xxxx
-			global_0x8a.e = 0;
 			global_0x8a.hl = ((128 * sector) * 8) + 0x8000;
 		}
 #elif defined(VER_128K)
+		global_0x8a.e = 0;
 		if(sector == 0x80) {
 			// EEPROM addr >= 0x004000
-			global_0x8a.e = 0;
 			global_0x8a.hl = 0x4000;
 		} else if(sector == 0x81) {
 			// EEPROM addr >= 0x004400
-			global_0x8a.e = 0;
 			global_0x8a.hl = 0x4400;
 		} else if(sector < 0x20) {
 			// Flash addr >= 0x00xxxx
-			global_0x8a.e = 0;
 			global_0x8a.hl = ((128 * sector) * 8) + 0x8000;
 		} else if(sector < 0x60) {
 			// Flash addr >= 0x01xxxx
-			sector -= 0x20;
 			global_0x8a.e = 0x01;
-			global_0x8a.hl = (128 * sector) * 8;
+			global_0x8a.hl = (128 * (sector - 0x20)) * 8;
 		} else {
 			// Flash addr >= 0x02xxxx
-			sector -= 0x60;
 			global_0x8a.e = 0x02;
-			global_0x8a.hl = (128 * sector) * 8;
+			global_0x8a.hl = (128 * (sector - 0x60)) * 8;
 		}
 #endif
 		
@@ -79,19 +71,11 @@ void erase(void) {
 		for(uint8_t i = 0; i < 8; i++) {
 			watchdog_refresh();
 			
-			// Enable flash block erasure.
-			FLASH_CR2 = (1 << FLASH_CR2_ERASE);
-			FLASH_NCR2 = ~(1 << FLASH_NCR2_NERASE);
+			flash_erase_enable();
 			
 			erase_block();
 			
-			if(FLASH_IAPSR & (1 << FLASH_IAPSR_WR_PG_DIS)) {
-				// Failed, attempted to erase a protected area; set a flag?
-				global_0x9b |= (1 << 0);
-			} else {
-				// Wait for end-of-programming to occur.
-				while(!(FLASH_IAPSR & (1 << FLASH_IAPSR_EOP)));
-			}
+			flash_prg_wait(&global_0x9b);
 			
 			// Increment address by one block. Overflow won't matter, as it'll occur on the
 			// final block of the sector, so we don't need to increment extended byte of
@@ -109,6 +93,9 @@ void erase_block(void) {
 	// (with >32 KB flash). We can only work with 'extended' addressing using
 	// assembly code.
 	
+	// TODO: can the erase sequence of writing four zeroes be done in reverse?
+	// i.e. writing from highest address to lowest? Would make assembly smaller
+	// as counter in X could count down to zero.
 	__asm
 		; Initialise address offset in X to zero, and set byte to be written
 		; in A also to zero.
@@ -117,13 +104,10 @@ void erase_block(void) {
 		
 		; Erase the block by writing a sequence of four zero bytes at address
 		; given by global variable. Increment address offset as we go.
+	0001$:
 		ldf ([_global_0x8a], x), a
 		incw x
-		ldf ([_global_0x8a], x), a
-		incw x
-		ldf ([_global_0x8a], x), a
-		incw x
-		ldf ([_global_0x8a], x), a
-		incw x
+		cpw x, #4
+		jrult 0001$
 	__endasm;
 }

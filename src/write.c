@@ -8,9 +8,6 @@ static void write_byte(const uint8_t data, const uint16_t idx);
 
 /******************************************************************************/
 
-// TODO: this code too big! needs to be 10 bytes smaller!
-// break in to smaller sub-functions, some of which are placed in further sections of RAM, beyond 0x1FF?
-
 void write(void) {
 	uint16_t idx = 0;
 	
@@ -21,12 +18,10 @@ void write(void) {
 	if(global_0x8e & (1 << 6)) {
 		if(global_0x98 & (1 << 0)) {
 			// Enable writing of option bytes in addition to block writing.
-			FLASH_CR2 = (FLASH_CR2_PRG | FLASH_CR2_OPT);
-			FLASH_NCR2 = ~(FLASH_NCR2_NPRG | FLASH_NCR2_NOPT);
+			flash_block_prg_option_wr_enable();
 		} else {
 			// Enable just block writing.
-			FLASH_CR2 = FLASH_CR2_PRG;
-			FLASH_NCR2 = ~FLASH_NCR2_NPRG;
+			flash_block_prg_enable();
 		}
 	}	
 		
@@ -36,13 +31,7 @@ void write(void) {
 		write_byte(global_0x00[idx], idx);
 		
 		if(!(global_0x8e & (1 << 6))) {
-			if(FLASH_IAPSR & (1 << FLASH_IAPSR_WR_PG_DIS)) {
-				// Failed, attempted to erase a protected area; set a flag?
-				global_0x9c |= (1 << 0);
-			} else {
-				// Wait for end-of-programming to occur.
-				while(!(FLASH_IAPSR & (1 << FLASH_IAPSR_EOP)));
-			}
+			flash_prg_wait(&global_0x9c);
 		}
 		
 		watchdog_refresh();
@@ -52,13 +41,7 @@ void write(void) {
 	
 	// ??? Why does it do this once more?
 	if(global_0x8e & (1 << 6)) {
-		if(FLASH_IAPSR & (1 << FLASH_IAPSR_WR_PG_DIS)) {
-			// Failed, attempted to erase a protected area; set a flag?
-			global_0x9c |= (1 << 0);
-		} else {
-			// Wait for end-of-programming to occur.
-			while(!(FLASH_IAPSR & (1 << FLASH_IAPSR_EOP)));
-		}
+		flash_prg_wait(&global_0x9c);
 	}
 }
 
