@@ -1,3 +1,6 @@
+#pragma codeseg ERASE_SEG
+#pragma callee_saves erase
+
 #include <stdint.h>
 #include "common.h"
 

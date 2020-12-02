@@ -1,3 +1,6 @@
+#pragma codeseg WRITE_SEG
+#pragma callee_saves write
+
 #include <stdint.h>
 #include "common.h"
 
