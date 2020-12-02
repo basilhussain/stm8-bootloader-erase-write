@@ -31,14 +31,14 @@ typedef struct {
 	uint16_t hl; // high & low bytes
 } addr_t;
 
+extern void flash_erase_enable(void);
+extern void flash_block_prg_enable(void);
+extern void flash_block_prg_option_wr_enable(void);
+extern void flash_prg_wait(uint8_t *prot_flag);
 
-// NOTE: locations of global variables are only compatible with 128K devices with ROM bootloader version 2.4.
-
-// Function in bootloader ROM (at 0x608A) that refreshes the watchdog.
+// Function in bootloader ROM that refreshes the watchdog.
 // Location is specified at link time. See *.lk command files.
 extern void watchdog_refresh(void);
-// Alternatively... (okay to do, because function doesn't have any side effects)
-// #define watchdog_refresh() do { __asm__("call 0x608a"); } while(0)
 
 /*
 Global variables map:
