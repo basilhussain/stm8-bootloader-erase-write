@@ -35,7 +35,7 @@ typedef struct {
 // NOTE: locations of global variables are only compatible with 128K devices with ROM bootloader version 2.4.
 
 // Function in bootloader ROM (at 0x608A) that refreshes the watchdog.
-// Location is specified at link time (-Wl-g_watchdog_refresh=0x608A).
+// Location is specified at link time. See *.lk command files.
 extern void watchdog_refresh(void);
 // Alternatively... (okay to do, because function doesn't have any side effects)
 // #define watchdog_refresh() do { __asm__("call 0x608a"); } while(0)
@@ -60,11 +60,13 @@ Addr		Size	Comment
 
 */
 
-__at (0x00) uint8_t global_0x00[130];
-__at (0x88) uint8_t global_0x88;
-__at (0x8a) addr_t global_0x8a;
-__at (0x8e) uint8_t global_0x8e;
-__at (0x90) uint8_t global_0x90;
-__at (0x98) uint8_t global_0x98;
-__at (0x9b) uint8_t global_0x9b;
-__at (0x9c) uint8_t global_0x9c;
+// Locations are specified at link time according to compatibility with ROM
+// bootloader version. See *.lk command files.
+extern uint8_t global_0x00[130];
+extern uint8_t global_0x88;
+extern addr_t global_0x8a;
+extern uint8_t global_0x8e;
+extern uint8_t global_0x90;
+extern uint8_t global_0x98;
+extern uint8_t global_0x9b;
+extern uint8_t global_0x9c;
