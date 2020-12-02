@@ -1,36 +1,52 @@
 #include <stdint.h>
 #include "common.h"
 
+#if defined(VER_32K)
+#define ERASE_MAX_SECTOR 0x20
+#elif defined(VER_128K)
+#define ERASE_MAX_SECTOR 0x81
+#else
+#error "Bootloader version not defined - must be either VER_32K or VER_128K"
+#endif
+
 static void erase_block(void);
 
 /******************************************************************************/
 
-// NOTE: this code is only compatible with 128K devices with ROM bootloader version 2.4.
-
 // TODO: this code is too big! needs to be 4 bytes smaller!
 // break in to smaller sub-functions, some of which are placed in further sections of RAM, beyond 0x1FF?
 
-// Erase routine must reside in RAM at address 0xA0.
 void erase(void) {
 	global_0x90 = 0;
 	global_0x9b = 0;
 	
-	// Doing a full erase? Fill the global buffer with numbers of all sectors (0x0-0x81).
+	// Doing a full erase? Fill the global buffer with numbers of all sectors.
 	if(global_0x8e & (1 << 4)) {
 		do {
 			watchdog_refresh();
 			global_0x00[global_0x90] = global_0x90;
-		} while(++global_0x90 < 0x82);
+		} while(++global_0x90 <= ERASE_MAX_SECTOR);
 		
-		global_0x88 = 0x81; // max sector number?
+		global_0x88 = ERASE_MAX_SECTOR;
 		global_0x90 = 0;
 	}
 	
 	while(global_0x90 < global_0x88) {
 		// Get next sector number from buffer.
 		uint8_t sector = global_0x00[global_0x90];
-		
+
 		// Translate 'sector code' (see UM0560 section 3.7) into address in EEPROM or flash.
+#if defined(VER_32K)
+		if(sector == 0x20) {
+			// EEPROM addr >= 0x004000
+			global_0x8a.e = 0;
+			global_0x8a.hl = 0x4000;
+		} else {
+			// Flash addr >= 0x00xxxx
+			global_0x8a.e = 0;
+			global_0x8a.hl = ((128 * sector) * 8) + 0x8000;
+		}
+#elif defined(VER_128K)
 		if(sector == 0x80) {
 			// EEPROM addr >= 0x004000
 			global_0x8a.e = 0;
@@ -42,7 +58,7 @@ void erase(void) {
 		} else if(sector < 0x20) {
 			// Flash addr >= 0x00xxxx
 			global_0x8a.e = 0;
-			global_0x8a.hl = ((128 * sector) * 8) + 0x8000; // Flash base address
+			global_0x8a.hl = ((128 * sector) * 8) + 0x8000;
 		} else if(sector < 0x60) {
 			// Flash addr >= 0x01xxxx
 			sector -= 0x20;
@@ -54,6 +70,7 @@ void erase(void) {
 			global_0x8a.e = 0x02;
 			global_0x8a.hl = (128 * sector) * 8;
 		}
+#endif
 		
 		// Block size is 128 bytes (on high/medium density devices), 8 blocks per sector (1K).
 		for(uint8_t i = 0; i < 8; i++) {
