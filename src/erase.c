@@ -37,7 +37,7 @@ void erase(void) {
 
 		// Translate 'sector code' (see UM0560 section 3.7) into address in EEPROM or flash.
 #if defined(VER_32K)
-		global_0x8a.e = 0;
+		global_0x8a.e = 0x0;
 		if(sector == 0x20) {
 			// EEPROM addr >= 0x004000
 			global_0x8a.hl = 0x4000;
@@ -46,7 +46,34 @@ void erase(void) {
 			global_0x8a.hl = ((128 * sector) * 8) + 0x8000;
 		}
 #elif defined(VER_128K)
-		global_0x8a.e = 0;
+		/*
+		// NOPE, BIGGER THAN PREVIOUS CODE BELOW
+		global_0x8a.e = 0x0;
+		if(sector == 0x80) {
+			// EEPROM addr >= 0x004000
+			global_0x8a.hl = 0x4000;
+		} else if(sector == 0x81) {
+			// EEPROM addr >= 0x004400
+			global_0x8a.hl = 0x4400;
+		} else {
+			global_0x8a.hl = 0x0;
+			if(sector >= 0x60) {
+				// Flash addr >= 0x02xxxx
+				global_0x8a.e = 0x02;
+				sector -= 0x60;
+			} else if(sector >= 0x20) {
+				// Flash addr >= 0x01xxxx
+				global_0x8a.e = 0x01;
+				sector -= 0x20;
+			} else {
+				// Flash addr >= 0x00xxxx; initialise with base address.
+				global_0x8a.hl = 0x8000;
+			}
+			global_0x8a.hl += (128 * sector) * 8;
+		}
+		*/
+		
+		global_0x8a.e = 0x0;
 		if(sector == 0x80) {
 			// EEPROM addr >= 0x004000
 			global_0x8a.hl = 0x4000;
