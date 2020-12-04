@@ -45,12 +45,15 @@ Global variables map:
 
 Addr		Size	Comment
 -------------------------------
-0x0-0x81	130		buffer of stuff? (i.e. erase sector numbers)?
-0x88		1		buffer length? (max sector num for erase? num of bytes for write?)
+0x0-0x81	130		data buffer (i.e. erase sector numbers, bytes to be written)
+0x82		1		bootloader command (e.g. 0x31 for WRITE)
+0x83		1		bootloader command complement/inverse (e.g. 0xCE for WRITE)
+0x88		1		data buffer length minus one (i.e. max sector num for erase, num of bytes + 1 to be written)
 0x8A		1		e }
 0x8B		1		h } 24-bit memory address
 0x8C		1		l }
-0x8E		1		some kind of bit flag field?
+0x8E		1		some kind of status bit flag field?
+0x8F		1		used for calculating checksums?
 0x90		1		sector number for erase?
 0x98		1	
 0x9b		1		also some kind of status bit flag field for erase?

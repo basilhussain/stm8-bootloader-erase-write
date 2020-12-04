@@ -30,6 +30,8 @@ void write(void) {
 	while(idx < global_0x88) {
 		write_byte(global_0x00[idx], idx);
 		
+		// If not writing a whole block (i.e. byte programming), we must wait
+		// after each byte written for programming to complete.
 		if(!(global_0x8e & (1 << 6))) {
 			flash_prg_wait(&global_0x9c);
 		}
@@ -39,7 +41,7 @@ void write(void) {
 		idx++;
 	}
 	
-	// ??? Why does it do this once more?
+	// If we wrote a whole block, wait for programming to complete.
 	if(global_0x8e & (1 << 6)) {
 		flash_prg_wait(&global_0x9c);
 	}
