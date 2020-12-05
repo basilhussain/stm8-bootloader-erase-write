@@ -12,48 +12,42 @@ Type help for a list of commands.
 Addr    Opcode Instruction                              Cycles
 ------- ------ ----------------------------------       ------
 0x6000:  9b             sim                                      cycles=1
-0x6001:  ad 0c          callr $600f  (offset=12)                 cycles=4
-0x6003:  25 19          jrc $601e  (offset=25)                   cycles=1-2
+0x6001:  ad 0c          callr $600f  (offset=12)                 cycles=4                            call func to check if device blank
+0x6003:  25 19          jrc $601e  (offset=25)                   cycles=1-2                          if so, jump
 0x6005:  ce 48 7e       ldw X, $487e                             cycles=2
-0x6008:  a3 55 aa       cpw X, #$55aa                            cycles=2
-0x600b:  27 11          jreq $601e  (offset=17)                  cycles=1-2
+0x6008:  a3 55 aa       cpw X, #$55aa                            cycles=2                            read OPTBL and NOPTBL option bytes and check if bootloader is enabled (value 0x55AA)
+0x600b:  27 11          jreq $601e  (offset=17)                  cycles=1-2                          if so, jump
 0x600d:  20 16          jra $6025  (offset=22)                   cycles=2
 
 
 =============================================================================
 
+Function that checks first byte of flash for INT or JPF instruction. Sets carry flag if not - device is 'blank'.
+(wtf is this function in the middle of other code?)
 
-0x600f:  c6 80 00       ld A, $8000                              cycles=1
-0x6012:  a1 82          cp A, #$82                               cycles=1
-0x6014:  27 06          jreq $601c  (offset=6)                   cycles=1-2
+0x600f:  c6 80 00       ld A, $8000                              cycles=1                            read first byte of flash
+0x6012:  a1 82          cp A, #$82                               cycles=1                            
+0x6014:  27 06          jreq $601c  (offset=6)                   cycles=1-2                          is it INT instruction?
 0x6016:  a1 ac          cp A, #$ac                               cycles=1
-0x6018:  27 02          jreq $601c  (offset=2)                   cycles=1-2
+0x6018:  27 02          jreq $601c  (offset=2)                   cycles=1-2                          or is it JPF instruction?
 0x601a:  99             scf                                      cycles=1
 0x601b:  81             ret                                      cycles=4
 0x601c:  98             rcf                                      cycles=1
 0x601d:  81             ret                                      cycles=4
 
-
 =============================================================================
 
+0x601e:  c6 48 00       ld A, $4800                              cycles=1                            read OPT0 option byte
+0x6021:  a1 aa          cp A, #$aa                               cycles=1                            see if read-out protection (ROP) is enabled
+0x6023:  26 09          jrne $602e  (offset=9)                   cycles=1-2                          if not, proceed with bootloader
 
-0x601e:  c6 48 00       ld A, $4800                              cycles=1
-0x6021:  a1 aa          cp A, #$aa                               cycles=1
-0x6023:  26 09          jrne $602e  (offset=9)                   cycles=1-2
-
-
-=============================================================================
-
-
-0x6025:  5f             clrw X                                   cycles=1
+0x6025:  5f             clrw X                                   cycles=1                            zero A & X registers
 0x6026:  4f             clr A                                    cycles=1
-0x6027:  4b 28          push #$28                                cycles=1
-0x6029:  86             pop CC                                   cycles=1
-0x602a:  ac 00 80 00    jpf $8000                                cycles=2
+0x6027:  4b 28          push #$28                                cycles=1                            reset CC reg, set I0 and I1 flags (equiv to SIM instruction), all others clear
+0x6029:  86             pop CC                                   cycles=1                            
+0x602a:  ac 00 80 00    jpf $8000                                cycles=2                            EXIT BOOTLOADER, jump to 'user application' (flash reset vector)
 
-
-=============================================================================
-
+-----------------------------------------------------------------------------
 
 0x602e:  ad 5a          callr $608a  (offset=90)                 cycles=4
 0x6030:  72 10 50 c0    bset $50c0, #0                           cycles=1
@@ -90,6 +84,7 @@ Addr    Opcode Instruction                              Cycles
 
 =============================================================================
 
+Function that refreshes watchdog
 
 0x608a:  35 55 50 e0    mov $50e0, #$55                          cycles=1
 0x608e:  35 05 50 e1    mov $50e1, #$05                          cycles=1
@@ -363,10 +358,10 @@ Transmit function? (UART/CAN) Takes byte to send in A?
 0x6345:  a4 09          and A, #$09                              cycles=1                             check if parity (PE) or overrun (OR) error flags are set
 0x6347:  27 05          jreq $634e  (offset=5)                   cycles=1-2
 
-0x6349:  c6 52 31       ld A, $5231                              cycles=1                             load UART1 data reg
+0x6349:  c6 52 31       ld A, $5231                              cycles=1                             load UART1 data reg to A
 0x634c:  20 7c          jra $63ca  (offset=124)                  cycles=2
 
-0x634e:  c6 52 31       ld A, $5231                              cycles=1                             load UART1 data reg
+0x634e:  c6 52 31       ld A, $5231                              cycles=1                             load UART1 data reg to A
 0x6351:  20 27          jra $637a  (offset=39)                   cycles=2
 
 0x6353:  c6 54 24       ld A, $5424                              cycles=1                             CAN stuff...
@@ -385,7 +380,7 @@ Transmit function? (UART/CAN) Takes byte to send in A?
 0x6376:  20 02          jra $637a  (offset=2)                    cycles=2
 0x6378:  20 50          jra $63ca  (offset=80)                   cycles=2
 
-0x637a:  fc             jp (X)                                   cycles=1                             jump to pointer (initially $637b, later $6391, later still set by command switch)
+0x637a:  fc             jp (X)                                   cycles=1                             jump to pointer (initially $637b, later $6391, later still set as needed by other code that wants to receive a new byte of data)
 0x637b:  72 02 00 8e 07 btjt $8e, #1, $6387  (offset=7)          cycles=2-3                           test status bit 1 is set - using UART1?
 0x6380:  b7 82          ld $82,A                                 cycles=1                             write received command data byte to $82
 0x6382:  ae 63 91       ldw X, #$6391                            cycles=2                             update pointer?
@@ -532,12 +527,13 @@ READ command handler
 -----------------------------------------------------------------------------
 ERASE command handler
 
-0x64ae:  72 02 00 8e 0b btjt $8e, #1, $64be  (offset=11)         cycles=2-3                          
+0x64ae:  72 02 00 8e 0b btjt $8e, #1, $64be  (offset=11)         cycles=2-3                          CAN comms in use?
 0x64b3:  a6 79          ld A, #$79                               cycles=1
-0x64b5:  cd 61 22       call $6122                               cycles=4
-0x64b8:  ae 64 d4       ldw X, #$64d4                            cycles=2
-0x64bb:  cc 63 26       jp $6326                                 cycles=1
-0x64be:  c6 54 29       ld A, $5429                              cycles=1
+0x64b5:  cd 61 22       call $6122                               cycles=4                            transmit ACK
+0x64b8:  ae 64 d4       ldw X, #$64d4                            cycles=2                            set jump pointer
+0x64bb:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
+0x64be:  c6 54 29       ld A, $5429                              cycles=1                            CAN stuff...
 0x64c1:  27 56          jreq $6519  (offset=86)                  cycles=1-2
 0x64c3:  4a             dec A                                    cycles=1
 0x64c4:  b7 88          ld $88,A                                 cycles=1
@@ -546,51 +542,68 @@ ERASE command handler
 0x64cb:  26 6e          jrne $653b  (offset=110)                 cycles=1-2
 0x64cd:  72 18 00 8e    bset $8e, #4                             cycles=1
 0x64d1:  cc 65 6e       jp $656e                                 cycles=1
-0x64d4:  b7 88          ld $88,A                                 cycles=1
+
+0x64d4:  b7 88          ld $88,A                                 cycles=1                            load received byte - num of sectors -1 to erase
 0x64d6:  a1 ff          cp A, #$ff                               cycles=1
-0x64d8:  26 11          jrne $64eb  (offset=17)                  cycles=1-2
-0x64da:  ae 64 e0       ldw X, #$64e0                            cycles=2
-0x64dd:  cc 63 26       jp $6326                                 cycles=1
-0x64e0:  a1 00          cp A, #$00                               cycles=1
-0x64e2:  26 35          jrne $6519  (offset=53)                  cycles=1-2
-0x64e4:  72 18 00 8e    bset $8e, #4                             cycles=1
+0x64d8:  26 11          jrne $64eb  (offset=17)                  cycles=1-2                          if not equal to 0xff (full erase), jump
+0x64da:  ae 64 e0       ldw X, #$64e0                            cycles=2                            set jump pointer
+0x64dd:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
+0x64e0:  a1 00          cp A, #$00                               cycles=1                            load received byte
+0x64e2:  26 35          jrne $6519  (offset=53)                  cycles=1-2                          if not equal to 0x00, jump
+0x64e4:  72 18 00 8e    bset $8e, #4                             cycles=1                            set status byte flag bit 4 - indicates doing a full erase
 0x64e8:  cc 65 77       jp $6577                                 cycles=1
-0x64eb:  90 5f          clrw Y                                   cycles=1
-0x64ed:  a1 82          cp A, #$82                               cycles=1
-0x64ef:  24 02          jrnc $64f3  (offset=2)                   cycles=1-2
-0x64f1:  20 1c          jra $650f  (offset=28)                   cycles=2
-0x64f3:  ae 64 f9       ldw X, #$64f9                            cycles=2
-0x64f6:  cc 63 26       jp $6326                                 cycles=1
+
+0x64eb:  90 5f          clrw Y                                   cycles=1                            set data buffer pointer to zero
+0x64ed:  a1 82          cp A, #$82                               cycles=1                            is num of sectors-1 >= 0x82?
+0x64ef:  24 02          jrnc $64f3  (offset=2)                   cycles=1-2                          if so, continue
+0x64f1:  20 1c          jra $650f  (offset=28)                   cycles=2                            if not, jump
+
+0x64f3:  ae 64 f9       ldw X, #$64f9                            cycles=2                            set jump pointer
+0x64f6:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
+This following section is just receiving all the sectors numbers and following checksum but discarding them,
+because there are too many, which is an error condition.
+
 0x64f9:  90 9f          ld A, YL                                 cycles=1
-0x64fb:  b1 88          cp A, $88                                cycles=1
-0x64fd:  27 08          jreq $6507  (offset=8)                   cycles=1-2
-0x64ff:  90 5c          incw Y                                   cycles=1
-0x6501:  ae 64 f9       ldw X, #$64f9                            cycles=2
-0x6504:  cc 63 26       jp $6326                                 cycles=1
-0x6507:  ae 65 0d       ldw X, #$650d                            cycles=2
-0x650a:  cc 63 26       jp $6326                                 cycles=1
+0x64fb:  b1 88          cp A, $88                                cycles=1                            compare data buffer pointer to num of sectors
+0x64fd:  27 08          jreq $6507  (offset=8)                   cycles=1-2                          if equal, then jump
+0x64ff:  90 5c          incw Y                                   cycles=1                            increment data buffer pointer
+0x6501:  ae 64 f9       ldw X, #$64f9                            cycles=2                            set jump pointer
+0x6504:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
+0x6507:  ae 65 0d       ldw X, #$650d                            cycles=2                            set jump pointer
+0x650a:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
 0x650d:  20 0a          jra $6519  (offset=10)                   cycles=2
+
 0x650f:  b6 88          ld A, $88                                cycles=1
-0x6511:  b7 8f          ld $8f,A                                 cycles=1
-0x6513:  ae 65 1c       ldw X, #$651c                            cycles=2
-0x6516:  cc 63 26       jp $6326                                 cycles=1
-0x6519:  cc 63 ca       jp $63ca                                 cycles=1
+0x6511:  b7 8f          ld $8f,A                                 cycles=1                            load number of sectors into checksum
+0x6513:  ae 65 1c       ldw X, #$651c                            cycles=2                            set jump pointer
+0x6516:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
+0x6519:  cc 63 ca       jp $63ca                                 cycles=1                            error (NACK)
+
 0x651c:  a1 82          cp A, #$82                               cycles=1
-0x651e:  24 02          jrnc $6522  (offset=2)                   cycles=1-2
+0x651e:  24 02          jrnc $6522  (offset=2)                   cycles=1-2                          is received sector num >= 0x82?
 0x6520:  20 04          jra $6526  (offset=4)                    cycles=2
-0x6522:  72 1e 00 8e    bset $8e, #7                             cycles=1
-0x6526:  90 e7 00       ld ($00,Y),A                             cycles=1
-0x6529:  b8 8f          xor A, $8f                               cycles=1
-0x652b:  b7 8f          ld $8f,A                                 cycles=1
+
+0x6522:  72 1e 00 8e    bset $8e, #7                             cycles=1                            set status byte flag bit 7
+
+0x6526:  90 e7 00       ld ($00,Y),A                             cycles=1                            load received byte in to data buffer (at location given by pointer)
+0x6529:  b8 8f          xor A, $8f                               cycles=1                            
+0x652b:  b7 8f          ld $8f,A                                 cycles=1                            update calculated checksum
 0x652d:  90 9f          ld A, YL                                 cycles=1
 0x652f:  b1 88          cp A, $88                                cycles=1
-0x6531:  27 1e          jreq $6551  (offset=30)                  cycles=1-2
-0x6533:  90 5c          incw Y                                   cycles=1
-0x6535:  ae 65 1c       ldw X, #$651c                            cycles=2
-0x6538:  cc 63 26       jp $6326                                 cycles=1
+0x6531:  27 1e          jreq $6551  (offset=30)                  cycles=1-2                          is data buffer pointer equal to number of sectors-1? if so, jump
+0x6533:  90 5c          incw Y                                   cycles=1                            increment data buffer pointer
+0x6535:  ae 65 1c       ldw X, #$651c                            cycles=2                            set jump pointer
+0x6538:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
 0x653b:  72 19 00 8e    bres $8e, #4                             cycles=1
 0x653f:  5f             clrw X                                   cycles=1
-0x6540:  d6 54 2e       ld A, ($542e,X)                          cycles=1
+
+0x6540:  d6 54 2e       ld A, ($542e,X)                          cycles=1                            CAN stuff...
 0x6543:  a1 82          cp A, #$82                               cycles=1
 0x6545:  24 d2          jrnc $6519  (offset=-46)                 cycles=1-2
 0x6547:  e7 00          ld ($00,X),A                             cycles=1
@@ -599,48 +612,56 @@ ERASE command handler
 0x654c:  27 20          jreq $656e  (offset=32)                  cycles=1-2
 0x654e:  5c             incw X                                   cycles=1
 0x654f:  20 ef          jra $6540  (offset=-17)                  cycles=2
-0x6551:  ae 65 57       ldw X, #$6557                            cycles=2
-0x6554:  cc 63 26       jp $6326                                 cycles=1
-0x6557:  72 0f 00 8e 06 btjf $8e, #7, $6562  (offset=6)          cycles=2-3
-0x655c:  72 1f 00 8e    bres $8e, #7                             cycles=1
-0x6560:  20 b7          jra $6519  (offset=-73)                  cycles=2
-0x6562:  72 19 00 8e    bres $8e, #4                             cycles=1
-0x6566:  b7 89          ld $89,A                                 cycles=1
-0x6568:  b8 8f          xor A, $8f                               cycles=1
-0x656a:  27 0b          jreq $6577  (offset=11)                  cycles=1-2
-0x656c:  20 ab          jra $6519  (offset=-85)                  cycles=2
-0x656e:  72 1a 54 24    bset $5424, #5                           cycles=1
+
+0x6551:  ae 65 57       ldw X, #$6557                            cycles=2                            set jump pointer
+0x6554:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
+0x6557:  72 0f 00 8e 06 btjf $8e, #7, $6562  (offset=6)          cycles=2-3                          check bit 7 of status byte is not set
+0x655c:  72 1f 00 8e    bres $8e, #7                             cycles=1                            clear status byte flag bit 7
+0x6560:  20 b7          jra $6519  (offset=-73)                  cycles=2                            error (NACK)
+
+0x6562:  72 19 00 8e    bres $8e, #4                             cycles=1                            clear status byte flag bit 4 - not doing full erase
+0x6566:  b7 89          ld $89,A                                 cycles=1                            load received checksum to $89
+0x6568:  b8 8f          xor A, $8f                               cycles=1                            check against calculated checksum in $8f (if same, XOR of them equals zero)
+0x656a:  27 0b          jreq $6577  (offset=11)                  cycles=1-2                          if it matches, jump
+0x656c:  20 ab          jra $6519  (offset=-85)                  cycles=2                            if not, jump
+
+0x656e:  72 1a 54 24    bset $5424, #5                           cycles=1                            CAN stuff...
 0x6572:  a6 79          ld A, #$79                               cycles=1
 0x6574:  cd 61 22       call $6122                               cycles=4
-0x6577:  cd 00 a0       call $a0                                 cycles=4
-0x657a:  b6 9b          ld A, $9b                                cycles=1
-0x657c:  26 9b          jrne $6519  (offset=-101)                cycles=1-2
+
+0x6577:  cd 00 a0       call $a0                                 cycles=4                            call RAM erase routine
+0x657a:  b6 9b          ld A, $9b                                cycles=1                            load return value from $9b
+0x657c:  26 9b          jrne $6519  (offset=-101)                cycles=1-2                          if not zero (i.e. failure?), jump
 0x657e:  a6 79          ld A, #$79                               cycles=1
-0x6580:  cd 61 22       call $6122                               cycles=4
+0x6580:  cd 61 22       call $6122                               cycles=4                            transmit ACK
 0x6583:  cc 63 23       jp $6323                                 cycles=1
 
 -----------------------------------------------------------------------------
 GO command handler
 
-0x6586:  72 02 00 8e 0b btjt $8e, #1, $6596  (offset=11)         cycles=2-3                         
+0x6586:  72 02 00 8e 0b btjt $8e, #1, $6596  (offset=11)         cycles=2-3                          test status bit 1
 0x658b:  a6 79          ld A, #$79                               cycles=1
-0x658d:  cd 61 22       call $6122                               cycles=4
-0x6590:  ae 66 a1       ldw X, #$66a1                            cycles=2
-0x6593:  cc 63 26       jp $6326                                 cycles=1
-0x6596:  c6 54 29       ld A, $5429                              cycles=1
-0x6599:  a1 04          cp A, #$04                               cycles=1
-0x659b:  26 14          jrne $65b1  (offset=20)                  cycles=1-2
-0x659d:  cd 66 de       call $66de                               cycles=4
-0x65a0:  cc 66 fa       jp $66fa                                 cycles=1
+0x658d:  cd 61 22       call $6122                               cycles=4                            transmit ACK
+0x6590:  ae 66 a1       ldw X, #$66a1                            cycles=2                            set jump pointer
+0x6593:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
+
+0x6596:  c6 54 29       ld A, $5429                              cycles=1                            load CAN_P1 reg
+0x6599:  a1 04          cp A, #$04                               cycles=1                            check received CAN msg length is 4 bytes?
+0x659b:  26 14          jrne $65b1  (offset=20)                  cycles=1-2                          if not equal to 4, jump
+0x659d:  cd 66 de       call $66de                               cycles=4                            
+0x65a0:  cc 66 fa       jp $66fa                                 cycles=1                            call into WRITE address handler to receive and validate address
 0x65a3:  5f             clrw X                                   cycles=1
-0x65a4:  4f             clr A                                    cycles=1
+0x65a4:  4f             clr A                                    cycles=1                            zero X & A registers
+
 0x65a5:  e7 a0          ld ($a0,X),A                             cycles=1
 0x65a7:  5c             incw X                                   cycles=1
 0x65a8:  a3 01 60       cpw X, #$160                             cycles=2
-0x65ab:  26 f8          jrne $65a5  (offset=-8)                  cycles=1-2
+0x65ab:  26 f8          jrne $65a5  (offset=-8)                  cycles=1-2                          clear (i.e. write zeroes over) erase/write RAM routines?
 0x65ad:  cd 63 0f       call $630f                               cycles=4
 0x65b0:  81             ret                                      cycles=4
-0x65b1:  cc 63 ca       jp $63ca                                 cycles=1
+
+0x65b1:  cc 63 ca       jp $63ca                                 cycles=1                            error (NACK)
 
 -----------------------------------------------------------------------------
 WRITE command handler
@@ -789,7 +810,12 @@ WTF is this following section doing? Seems like it is checking whether we will b
 0x66d9:  27 1f          jreq $66fa  (offset=31)                  cycles=1-2                          if it matches, jump
 0x66db:  cc 63 ca       jp $63ca                                 cycles=1                            otherwise, error (NACK)?
 
-0x66de:  ce 54 2e       ldw X, $542e                             cycles=2                            CAN stuff...
+
+=============================================================================
+
+Function to receive a 4-byte address via CAN?
+
+0x66de:  ce 54 2e       ldw X, $542e                             cycles=2
 0x66e1:  bf 84          ldw $84,X                                cycles=2
 0x66e3:  9f             ld A, XL                                 cycles=1
 0x66e4:  b7 8a          ld $8a,A                                 cycles=1
@@ -802,6 +828,9 @@ WTF is this following section doing? Seems like it is checking whether we will b
 0x66f3:  b7 92          ld $92,A                                 cycles=1
 0x66f5:  72 1a 54 24    bset $5424, #5                           cycles=1
 0x66f9:  81             ret                                      cycles=4
+
+=============================================================================
+
 
 0x66fa:  3f 98          clr $98                                  cycles=1
 0x66fc:  4f             clr A                                    cycles=1
@@ -865,7 +894,7 @@ WTF is this following section doing? Seems like it is checking whether we will b
 0x677c:  27 18          jreq $6796  (offset=24)                  cycles=1-2
 0x677e:  cc 65 a3       jp $65a3                                 cycles=1                            otherwise... wtf? jump into middle of GO command handler?
 
-0x6781:  72 02 00 8e 08 btjt $8e, #1, $678e  (offset=8)          cycles=2-3                          is bit 1 of status byte $8e set? (flag indicating if we got data length yet?)
+0x6781:  72 02 00 8e 08 btjt $8e, #1, $678e  (offset=8)          cycles=2-3                          is bit 1 of status byte $8e set?
 0x6786:  ae 65 d5       ldw X, #$65d5                            cycles=2                            set jump pointer
 0x6789:  3f 8f          clr $8f                                  cycles=1                            initialise data length to zero?
 0x678b:  cc 63 26       jp $6326                                 cycles=1                            receive another byte
