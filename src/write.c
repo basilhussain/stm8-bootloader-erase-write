@@ -1,5 +1,5 @@
 #pragma codeseg WRITE_SEG
-#pragma callee_saves write
+#pragma callee_saves write // TODO: F%$&!! This isn't implemented by SDCC for STM8!
 
 #include <stdint.h>
 #include "common.h"

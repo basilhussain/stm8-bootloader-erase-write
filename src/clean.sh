@@ -4,4 +4,4 @@
 cd `dirname $0`
 
 # run makefile
-make -f Makefile
+make -f Makefile clean
