@@ -1,17 +1,11 @@
 #pragma codeseg ERASE_SEG
-#pragma callee_saves erase
+#pragma callee_saves erase // TODO: F%$&!! This isn't implemented by SDCC for STM8!
 
 #include <stdint.h>
 #include "common.h"
 
-#if defined(VER_32K)
-#define ERASE_MAX_SECTOR 0x20
-#elif defined(VER_128K)
-#define ERASE_MAX_SECTOR 0x81
-#else
-#error "Bootloader version not defined - must be either VER_32K or VER_128K"
-#endif
-
+extern void erase_fill_sectors(void);
+extern void erase_map_sector_to_addr(const uint8_t sector);
 static void erase_block(void);
 
 /******************************************************************************/
@@ -26,78 +20,14 @@ void erase(void) {
 #else
 	if(global_0x8e & (1 << 4)) {
 #endif
-		do {
-			watchdog_refresh();
-			global_0x00[global_0x90] = global_0x90;
-		} while(++global_0x90 <= ERASE_MAX_SECTOR);
-		
-		global_0x88 = ERASE_MAX_SECTOR;
-		global_0x90 = 0;
+		erase_fill_sectors();
 	}
 	
 	while(global_0x90 < global_0x88) {
-		// Get next sector number from buffer.
-		const uint8_t sector = global_0x00[global_0x90];
+		// Get next sector number from buffer and translate into address in
+		// EEPROM or flash (see UM0560 section 3.7).
+		erase_map_sector_to_addr(global_0x00[global_0x90]);
 
-		// Translate 'sector code' (see UM0560 section 3.7) into address in EEPROM or flash.
-#if defined(VER_32K)
-		global_0x8a.e = 0x0;
-		if(sector == 0x20) {
-			// EEPROM addr >= 0x004000
-			global_0x8a.hl = 0x4000;
-		} else {
-			// Flash addr >= 0x00xxxx
-			global_0x8a.hl = ((128 * sector) * 8) + 0x8000;
-		}
-#elif defined(VER_128K)
-		/*
-		// NOPE, BIGGER THAN PREVIOUS CODE BELOW
-		global_0x8a.e = 0x0;
-		if(sector == 0x80) {
-			// EEPROM addr >= 0x004000
-			global_0x8a.hl = 0x4000;
-		} else if(sector == 0x81) {
-			// EEPROM addr >= 0x004400
-			global_0x8a.hl = 0x4400;
-		} else {
-			global_0x8a.hl = 0x0;
-			if(sector >= 0x60) {
-				// Flash addr >= 0x02xxxx
-				global_0x8a.e = 0x02;
-				sector -= 0x60;
-			} else if(sector >= 0x20) {
-				// Flash addr >= 0x01xxxx
-				global_0x8a.e = 0x01;
-				sector -= 0x20;
-			} else {
-				// Flash addr >= 0x00xxxx; initialise with base address.
-				global_0x8a.hl = 0x8000;
-			}
-			global_0x8a.hl += (128 * sector) * 8;
-		}
-		*/
-		
-		global_0x8a.e = 0x0;
-		if(sector == 0x80) {
-			// EEPROM addr >= 0x004000
-			global_0x8a.hl = 0x4000;
-		} else if(sector == 0x81) {
-			// EEPROM addr >= 0x004400
-			global_0x8a.hl = 0x4400;
-		} else if(sector < 0x20) {
-			// Flash addr >= 0x00xxxx
-			global_0x8a.hl = ((128 * sector) * 8) + 0x8000;
-		} else if(sector < 0x60) {
-			// Flash addr >= 0x01xxxx
-			global_0x8a.e = 0x01;
-			global_0x8a.hl = (128 * (sector - 0x20)) * 8;
-		} else {
-			// Flash addr >= 0x02xxxx
-			global_0x8a.e = 0x02;
-			global_0x8a.hl = (128 * (sector - 0x60)) * 8;
-		}
-#endif
-		
 		// Block size is 128 bytes (on high/medium density devices), 8 blocks per sector (1K).
 		for(uint8_t i = 0; i < 8; i++) {
 			watchdog_refresh();
