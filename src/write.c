@@ -15,7 +15,11 @@ void write(void) {
 	
 	global_0x9c = 0;
 
+#ifdef STATUS_STRUCT
+	if(global_0x8e.write_flash_block) {
+#else
 	if(global_0x8e & (1 << 6)) {
+#endif
 		if(global_0x98 & (1 << 0)) {
 			// Enable writing of option bytes in addition to block writing.
 			flash_block_prg_option_wr_enable();
@@ -32,7 +36,11 @@ void write(void) {
 		
 		// If not writing a whole block (i.e. byte programming), we must wait
 		// after each byte written for programming to complete.
+#ifdef STATUS_STRUCT
+		if(!global_0x8e.write_flash_block) {
+#else
 		if(!(global_0x8e & (1 << 6))) {
+#endif
 			flash_prg_wait(&global_0x9c);
 		}
 		
@@ -42,7 +50,11 @@ void write(void) {
 	}
 	
 	// If we wrote a whole block, wait for programming to complete.
+#ifdef STATUS_STRUCT
+	if(global_0x8e.write_flash_block) {
+#else
 	if(global_0x8e & (1 << 6)) {
+#endif
 		flash_prg_wait(&global_0x9c);
 	}
 }

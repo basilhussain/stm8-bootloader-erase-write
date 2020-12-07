@@ -21,7 +21,11 @@ void erase(void) {
 	global_0x9b = 0;
 	
 	// Doing a full erase? Fill the global buffer with numbers of all sectors.
+#ifdef STATUS_STRUCT
+	if(global_0x8e.erase_full) {
+#else
 	if(global_0x8e & (1 << 4)) {
+#endif
 		do {
 			watchdog_refresh();
 			global_0x00[global_0x90] = global_0x90;
