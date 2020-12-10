@@ -41,6 +41,11 @@ all: $(BINARIES)
 
 $(BINARIES): $(LINKCOMMON) $(LINKTARGETS) $(OBJECTS) $(BINDIR)
 	$(LD) $(LDFLAGS) -i $@ -f $(LINKDIR)/common.lk -f $(LINKDIR)/$(patsubst erase_write_%.ihx,%.lk,$(notdir $@))
+ifeq ($(OS),Windows_NT)
+	check-seg-size.bat $(BINDIR)/$(basename $(@F)).map
+else
+	./check-seg-size.awk $(BINDIR)/$(basename $(@F)).map
+endif
 
 $(OBJECTS): $(SOURCES) $(HEADERS) $(OBJDIR)
 	$(CC) $(CFLAGS) -o $@ -c $(basename $(@F)).c
