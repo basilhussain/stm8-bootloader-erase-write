@@ -11,7 +11,7 @@ END {
 	if(num_overlaps > 0) {
 		printf "%d segment overlap(s) found\n", num_overlaps;
 	} else {
-		print "No segment overlaps found\n";
+		# print "No segment overlaps found\n";
 	}
 	
 	# exit num_overlaps;
