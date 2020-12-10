@@ -1,9 +1,6 @@
--muwx
--i bin/erase_write.ihx
--Y
+-mwx
 -b HOME=0x8000
 -b DATA=0x400
--b SSEG=0xffffffff
 -b COMMON_SEG=0x200
 obj/erase.rel
 obj/write.rel

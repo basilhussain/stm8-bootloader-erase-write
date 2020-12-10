@@ -1,5 +1,5 @@
 #pragma codeseg WRITE_SEG
-#pragma callee_saves write
+#pragma callee_saves write // TODO: F%$&!! This isn't implemented by SDCC for STM8!
 
 #include <stdint.h>
 #include "common.h"
@@ -15,7 +15,11 @@ void write(void) {
 	
 	global_0x9c = 0;
 
+#ifdef STATUS_STRUCT
+	if(global_0x8e.write_flash_block) {
+#else
 	if(global_0x8e & (1 << 6)) {
+#endif
 		if(global_0x98 & (1 << 0)) {
 			// Enable writing of option bytes in addition to block writing.
 			flash_block_prg_option_wr_enable();
@@ -27,10 +31,18 @@ void write(void) {
 		
 	global_0x98 = 0;
 	
+	// TODO: earliest BL versions call watchdog function here instead. Perhaps add another call?
+	
 	while(idx < global_0x88) {
 		write_byte(global_0x00[idx], idx);
 		
+		// If not writing a whole block (i.e. byte programming), we must wait
+		// after each byte written for programming to complete.
+#ifdef STATUS_STRUCT
+		if(!global_0x8e.write_flash_block) {
+#else
 		if(!(global_0x8e & (1 << 6))) {
+#endif
 			flash_prg_wait(&global_0x9c);
 		}
 		
@@ -39,8 +51,12 @@ void write(void) {
 		idx++;
 	}
 	
-	// ??? Why does it do this once more?
+	// If we wrote a whole block, wait for programming to complete.
+#ifdef STATUS_STRUCT
+	if(global_0x8e.write_flash_block) {
+#else
 	if(global_0x8e & (1 << 6)) {
+#endif
 		flash_prg_wait(&global_0x9c);
 	}
 }

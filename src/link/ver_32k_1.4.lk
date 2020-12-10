@@ -9,3 +9,5 @@
 -g _global_0x9b=0x96
 -g _global_0x9c=0x97
 -g _watchdog_refresh=0x6063
+obj/erase_32k.rel
+-e
