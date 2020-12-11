@@ -26,7 +26,7 @@ $1 == "Area" && $2 == "Addr" && $3 == "Size" {
 				seg_addr = strtonum("0x" $2);
 				seg_size = strtonum("0x" $3);
 				
-				if(prev_seg_addr + prev_seg_size >= seg_addr) {
+				if(prev_seg_addr + prev_seg_size - 1 >= seg_addr) {
 					num_overlaps++;
 				
 					printf "*** WARNING: Segment %s overlaps with following segment %s! ***\n", prev_seg_name, $1;
