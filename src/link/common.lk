@@ -1,8 +1,4 @@
 -mwx
 -b HOME=0x8000
 -b DATA=0x400
--b COMMON_SEG=0x200
-obj/erase.rel
-obj/write.rel
-obj/common.rel
 -e
