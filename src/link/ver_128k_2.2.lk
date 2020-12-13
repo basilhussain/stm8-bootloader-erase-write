@@ -1,5 +1,6 @@
 -b ERASE_SEG=0xA0
 -b WRITE_SEG=0x180
+-b COMMON_SEG=0x200
 -g _global_0x00=0x00
 -g _global_0x88=0x88
 -g _global_0x8a=0x8A
@@ -9,5 +10,8 @@
 -g _global_0x9b=0x9B
 -g _global_0x9c=0x9C
 -g _watchdog_refresh=0x608A
+obj/erase.rel
 obj/erase_128k.rel
+obj/write.rel
+obj/common.rel
 -e
