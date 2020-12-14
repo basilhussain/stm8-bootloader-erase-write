@@ -47,8 +47,7 @@ $(BINARIES): $(LINKCOMMON) $(LINKTARGETS) $(OBJECTS) $(BINDIR)
 ifeq ($(OS),Windows_NT)
 	check-seg-size.bat $(BINDIR)/$(basename $(@F)).map
 else
-	chmod u+x ./check-seg-size.awk
-	./check-seg-size.awk $(BINDIR)/$(basename $(@F)).map
+	awk -f ./check-seg-size.awk $(BINDIR)/$(basename $(@F)).map
 endif
 
 $(OBJECTS): $(SOURCES) $(OBJDIR)
