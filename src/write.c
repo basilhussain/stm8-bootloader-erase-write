@@ -33,7 +33,7 @@ void write(void) {
 	
 	// TODO: earliest BL versions call watchdog function here instead. Perhaps add another call?
 	
-	while(idx < global_0x88) {
+	while(idx <= global_0x88) {
 		write_byte(global_0x00[idx], idx);
 		
 		// If not writing a whole block (i.e. byte programming), we must wait

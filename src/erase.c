@@ -23,7 +23,7 @@ void erase(void) {
 		erase_fill_sectors();
 	}
 	
-	while(global_0x90 < global_0x88) {
+	while(global_0x90 <= global_0x88) {
 		// Get next sector number from buffer and translate into address in
 		// EEPROM or flash (see UM0560 section 3.7).
 		erase_map_sector_to_addr(global_0x00[global_0x90]);
