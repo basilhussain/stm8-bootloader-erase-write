@@ -53,6 +53,8 @@ extern void flash_erase_enable(void);
 extern void flash_block_prg_enable(void);
 extern void flash_block_prg_option_wr_enable(void);
 extern void flash_prg_wait(uint8_t *prot_flag);
+extern uint16_t flash_sector_addr_hl(const uint8_t sector);
+extern void fill_sector_nums(const uint8_t max_sector);
 
 // Function in bootloader ROM that refreshes the watchdog.
 // Location is specified at link time. See *.lk command files.
