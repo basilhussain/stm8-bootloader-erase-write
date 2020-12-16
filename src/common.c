@@ -24,8 +24,8 @@ void flash_block_prg_enable(void) {
 
 void flash_block_prg_option_wr_enable(void) {
 	// Enable writing of option bytes in addition to block writing.
-	FLASH_CR2  = (1 << FLASH_CR2_PRG) | (1 << FLASH_CR2_OPT);
-	FLASH_NCR2 = ~(1 << FLASH_NCR2_NPRG) | (1 << FLASH_NCR2_NOPT);
+	FLASH_CR2  = ((1 << FLASH_CR2_PRG) | (1 << FLASH_CR2_OPT));
+	FLASH_NCR2 = ~((1 << FLASH_NCR2_NPRG) | (1 << FLASH_NCR2_NOPT));
 }
 
 void flash_prg_wait(uint8_t *prot_flag) {
