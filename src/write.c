@@ -2,6 +2,7 @@
 #pragma callee_saves write // TODO: F%$&!! This isn't implemented by SDCC for STM8!
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "common.h"
 
 static void write_byte(const uint8_t data, const uint16_t idx);
@@ -13,7 +14,7 @@ void write(void) {
 	
 	watchdog_refresh();
 	
-	global_0x9c = 0;
+	global_0x9c = false;
 
 #ifdef STATUS_STRUCT
 	if(global_0x8e.write_flash_block) {
@@ -43,7 +44,7 @@ void write(void) {
 #else
 		if(!(global_0x8e & (1 << 6))) {
 #endif
-			flash_prg_wait(&global_0x9c);
+			global_0x9c = flash_prg_wait();
 		}
 		
 		watchdog_refresh();
@@ -57,7 +58,7 @@ void write(void) {
 #else
 	if(global_0x8e & (1 << 6)) {
 #endif
-		flash_prg_wait(&global_0x9c);
+		global_0x9c = flash_prg_wait();
 	}
 }
 

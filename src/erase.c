@@ -2,6 +2,7 @@
 #pragma callee_saves erase // TODO: F%$&!! This isn't implemented by SDCC for STM8!
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "common.h"
 
 extern void erase_fill_sectors(void);
@@ -12,7 +13,7 @@ static void erase_block(void);
 
 void erase(void) {
 	global_0x90 = 0;
-	global_0x9b = 0;
+	global_0x9b = false;
 	
 	// Doing a full erase? Fill the global buffer with numbers of all sectors.
 #ifdef STATUS_STRUCT
@@ -36,7 +37,7 @@ void erase(void) {
 			
 			erase_block();
 			
-			flash_prg_wait(&global_0x9b);
+			global_0x9b = flash_prg_wait();
 			
 			// Increment address by one block. Overflow won't matter, as it'll occur on the
 			// final block of the sector, so we don't need to increment extended byte of

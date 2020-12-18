@@ -6,6 +6,7 @@
 #pragma callee_saves watchdog_refresh // TODO: F%$&!! This isn't implemented by SDCC for STM8!
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "common.h"
 
 /******************************************************************************/
@@ -28,22 +29,34 @@ void flash_block_prg_option_wr_enable(void) {
 	FLASH_NCR2 = ~((1 << FLASH_NCR2_NPRG) | (1 << FLASH_NCR2_NOPT));
 }
 
-void flash_prg_wait(uint8_t *prot_flag) {
-	// TODO: earliest versions (128K v2.0 and 32K v1.0) of RAM routines do not
-	// check WR_PG_DIS, and consequently do not have a 'return' value.
+bool flash_prg_wait(void) {
+	uint8_t iapsr;
 
-	if(FLASH_IAPSR & (1 << FLASH_IAPSR_WR_PG_DIS)) {
-		// Failed, attempted to erase a protected area; set a flag?
-		*prot_flag |= (1 << 0);
-	} else {
-		// Wait for end-of-programming to occur.
-		while(!(FLASH_IAPSR & (1 << FLASH_IAPSR_EOP)));
-	}
+	// TODO: earliest versions (128K v2.0 and 32K v1.0) of RAM routines do not
+	// check WR_PG_DIS, and consequently do not have a 'return' value. Is it
+	// safe to still set those global vars?
+
+	// Wait for end-of-programming to occur.
+	do {
+		// Read the entire register at once. We do this because reading the
+		// register clears the WR_PG_DIS and EOP bits, so we need to perform
+		// value tests on a copy. See PM0051, section 4.2 "Block programming".
+		iapsr = FLASH_IAPSR;
+		
+		// Check if attempted to write/erase a protected area. If so, exit
+		// indicating failure.
+		if(iapsr & (1 << FLASH_IAPSR_WR_PG_DIS)) {
+			return true;
+		}
+	} while(!(iapsr & (1 << FLASH_IAPSR_EOP)));
+
+	return false;
 }
 
 uint16_t flash_sector_addr_hl(const uint8_t sector) {
-	// Given a sector number, calculate the address in flash it corresponds to.
-	// One sector is eight 128 byte blocks (equalling 1024 bytes).
+	// Given a sector number, calculate the high and low byte of the address
+	// in flash it corresponds to. One sector is eight 128 byte blocks
+	// (equalling 1024 bytes).
 	return ((128 * sector) * 8) + 0x8000;
 }
 
