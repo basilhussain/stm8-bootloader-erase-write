@@ -14,37 +14,37 @@ void write(void) {
 	
 	watchdog_refresh();
 	
-	global_0x9c = false;
+	write_err = false;
 
 #ifdef STATUS_STRUCT
-	if(global_0x8e.write_flash_block) {
+	if(status.write_flash_block) {
 #else
-	if(global_0x8e & (1 << 6)) {
+	if(status & (1 << STATUS_WRITE_FLASH_BLOCK)) {
 #endif
-		if(global_0x98 & (1 << 0)) {
+		if(option_write) {
 			// Enable writing of option bytes in addition to block writing.
 			flash_block_prg_option_wr_enable();
 		} else {
 			// Enable just block writing.
 			flash_block_prg_enable();
 		}
-	}	
-		
-	global_0x98 = 0;
+	}
+	
+	option_write = false;
 	
 	// TODO: earliest BL versions call watchdog function here instead. Perhaps add another call?
 	
-	while(idx <= global_0x88) {
-		write_byte(global_0x00[idx], idx);
+	while(idx <= data_buf_max) {
+		write_byte(data_buf[idx], idx);
 		
 		// If not writing a whole block (i.e. byte programming), we must wait
 		// after each byte written for programming to complete.
 #ifdef STATUS_STRUCT
-		if(!global_0x8e.write_flash_block) {
+		if(!status.write_flash_block) {
 #else
-		if(!(global_0x8e & (1 << 6))) {
+		if(!(status & (1 << STATUS_WRITE_FLASH_BLOCK))) {
 #endif
-			global_0x9c = flash_prg_wait();
+			write_err = flash_prg_wait();
 		}
 		
 		watchdog_refresh();
@@ -54,11 +54,11 @@ void write(void) {
 	
 	// If we wrote a whole block, wait for programming to complete.
 #ifdef STATUS_STRUCT
-	if(global_0x8e.write_flash_block) {
+	if(status.write_flash_block) {
 #else
-	if(global_0x8e & (1 << 6)) {
+	if(status & (1 << STATUS_WRITE_FLASH_BLOCK)) {
 #endif
-		global_0x9c = flash_prg_wait();
+		write_err = flash_prg_wait();
 	}
 }
 
@@ -79,6 +79,6 @@ void write_byte(const uint8_t data, const uint16_t idx) {
 		
 		; Write the byte to memory at base address given by global variable,
 		; offset by the index given by argument.
-		ldf ([_global_0x8a], x), a
+		ldf ([_mem_addr], x), a
 	__endasm;
 }

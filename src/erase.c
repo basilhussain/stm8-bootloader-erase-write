@@ -12,22 +12,22 @@ static void erase_block(void);
 /******************************************************************************/
 
 void erase(void) {
-	global_0x90 = 0;
-	global_0x9b = false;
+	count = 0;
+	erase_err = false;
 	
 	// Doing a full erase? Fill the global buffer with numbers of all sectors.
 #ifdef STATUS_STRUCT
-	if(global_0x8e.erase_full) {
+	if(status.erase_full) {
 #else
-	if(global_0x8e & (1 << 4)) {
+	if(status & (1 << STATUS_ERASE_FULL)) {
 #endif
 		erase_fill_sectors();
 	}
 	
-	while(global_0x90 <= global_0x88) {
+	while(count <= data_buf_max) {
 		// Get next sector number from buffer and translate into address in
 		// EEPROM or flash (see UM0560 section 3.7).
-		erase_map_sector_to_addr(global_0x00[global_0x90]);
+		erase_map_sector_to_addr(data_buf[count]);
 
 		// Block size is 128 bytes (on high/medium density devices), 8 blocks per sector (1K).
 		for(uint8_t i = 0; i < 8; i++) {
@@ -37,15 +37,15 @@ void erase(void) {
 			
 			erase_block();
 			
-			global_0x9b = flash_prg_wait();
+			erase_err = flash_prg_wait();
 			
 			// Increment address by one block. Overflow won't matter, as it'll occur on the
 			// final block of the sector, so we don't need to increment extended byte of
 			// address then.
-			global_0x8a.hl += 128;
+			mem_addr.hl += 128;
 		}
 		
-		global_0x90++;
+		count++;
 	}
 }
 
@@ -67,7 +67,7 @@ void erase_block(void) {
 		; Erase the block by writing a sequence of four zero bytes at address
 		; given by global variable. Increment address offset as we go.
 	0001$:
-		ldf ([_global_0x8a], x), a
+		ldf ([_mem_addr], x), a
 		incw x
 		cpw x, #4
 		jrult 0001$

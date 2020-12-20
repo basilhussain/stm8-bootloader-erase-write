@@ -65,10 +65,10 @@ void fill_sector_nums(const uint8_t max_sector) {
 	// given as argument.
 	for(uint8_t i = 0; i <= max_sector; i++) {
 		watchdog_refresh();
-		global_0x00[i] = i;
+		data_buf[i] = i;
 	}
 
 	// Set the global buffer limit (i.e. index of last element) to the given
 	// maximum sector number.
-	global_0x88 = max_sector;
+	data_buf_max = max_sector;
 }

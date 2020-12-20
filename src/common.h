@@ -24,6 +24,14 @@
 #define FLASH_IAPSR_DUL 3
 #define FLASH_IAPSR_HVOFF 6
 
+#ifndef STATUS_STRUCT
+#define STATUS_CAN 1
+#define STATUS_ERASE_FULL 4
+#define STATUS_WRITE_FLASH_EEPROM 5
+#define STATUS_WRITE_FLASH_BLOCK 6
+#define STATUS_CHECKSUM_OK 7
+#endif
+
 /******************************************************************************/
 
 // 24-bit extended memory address type
@@ -33,10 +41,10 @@ typedef struct {
 } addr_t;
 
 #ifdef STATUS_STRUCT
+// Possible structure and meaning of status bit flag field.
 // TODO: cannot use this just yet, as if statements testing bit fields in struct
 // are not optimised properly by the compiler (doesn't use BTJT/BTJF instructions),
 // making the code size too big! Can possibly be solved with custom peephole defs.
-// Possible structure and meaning of status bit flag field (global_0x8e).
 typedef struct {
 	bool : 1; // Bit #0 - ??? (Something to do with synchronisation?)
 	bool can : 1; // Bit #1 - Whether using CAN communication
@@ -79,7 +87,7 @@ Addr		Size	Comment
 0x8E		1		status bit flag field
 0x8F		1		temp storage used for calculating checksums
 0x90		1		current sector number for erase - not used by bootloader
-0x98		1		another status bit flag field - bit 0 = option byte writing has been enabled
+0x98		1		whether option byte writing needs to be enabled - 0x01 = yes, 0x00 = no
 0x9b		1		return status for erase - non-zero value indicates failure or error
 0x9c		1		return status for write - non-zero value indicates failure or error
 0x95		1		} location depending on bootloader version
@@ -88,15 +96,15 @@ Addr		Size	Comment
 
 // Locations are specified at link time according to compatibility with ROM
 // bootloader version. See *.lk command files.
-extern uint8_t global_0x00[130];
-extern uint8_t global_0x88;
-extern addr_t global_0x8a;
+extern uint8_t data_buf[130];
+extern uint8_t data_buf_max;
+extern addr_t mem_addr;
 #ifdef STATUS_STRUCT
-extern status_t global_0x8e;
+extern status_t status;
 #else
-extern uint8_t global_0x8e;
+extern uint8_t status;
 #endif
-extern uint8_t global_0x90;
-extern uint8_t global_0x98;
-extern bool global_0x9b;
-extern bool global_0x9c;
+extern uint8_t count;
+extern bool option_write;
+extern bool erase_err;
+extern bool write_err;
