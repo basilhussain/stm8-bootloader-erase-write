@@ -12,7 +12,6 @@ static void erase_block(void);
 /******************************************************************************/
 
 void erase(void) {
-	count = 0;
 	erase_err = false;
 	
 	// Doing a full erase? Fill the global buffer with numbers of all sectors.
@@ -24,10 +23,10 @@ void erase(void) {
 		erase_fill_sectors();
 	}
 	
-	while(count <= data_buf_max) {
+	for(uint8_t idx = 0; idx <= data_buf_max; idx++) {
 		// Get next sector number from buffer and translate into address in
 		// EEPROM or flash (see UM0560 section 3.7).
-		erase_map_sector_to_addr(data_buf[count]);
+		erase_map_sector_to_addr(data_buf[idx]);
 
 		// Block size is 128 bytes (on high/medium density devices), 8 blocks per sector (1K).
 		for(uint8_t i = 0; i < 8; i++) {
@@ -44,8 +43,6 @@ void erase(void) {
 			// address then.
 			mem_addr.hl += 128;
 		}
-		
-		count++;
 	}
 }
 

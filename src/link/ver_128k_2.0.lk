@@ -5,7 +5,6 @@
 -g _data_buf_max=0x88
 -g _mem_addr=0x8A
 -g _status=0x8E
--g _count=0x90
 -g _option_write=0x98
 -g _erase_err=0x9C
 -g _write_err=0x9D

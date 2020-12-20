@@ -10,12 +10,10 @@ static void write_byte(const uint8_t data, const uint16_t idx);
 /******************************************************************************/
 
 void write(void) {
-	uint16_t idx = 0;
+	write_err = false;
 	
 	watchdog_refresh();
 	
-	write_err = false;
-
 #ifdef STATUS_STRUCT
 	if(status.write_flash_block) {
 #else
@@ -34,7 +32,7 @@ void write(void) {
 	
 	// TODO: earliest BL versions call watchdog function here instead. Perhaps add another call?
 	
-	while(idx <= data_buf_max) {
+	for(uint8_t idx = 0; idx <= data_buf_max; idx++) {
 		write_byte(data_buf[idx], idx);
 		
 		// If not writing a whole block (i.e. byte programming), we must wait
@@ -48,8 +46,6 @@ void write(void) {
 		}
 		
 		watchdog_refresh();
-		
-		idx++;
 	}
 	
 	// If we wrote a whole block, wait for programming to complete.

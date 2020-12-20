@@ -86,7 +86,7 @@ Addr		Size	Comment
 0x8D		1		temp storage for any byte transmitted in reply by bootloader
 0x8E		1		status bit flag field
 0x8F		1		temp storage used for calculating checksums
-0x90		1		current sector number for erase - not used by bootloader
+0x90		1		current sector number for erase - but used by 32K v1.2 bootloader UART transmit func?!
 0x98		1		whether option byte writing needs to be enabled - 0x01 = yes, 0x00 = no
 0x9b		1		return status for erase - non-zero value indicates failure or error
 0x9c		1		return status for write - non-zero value indicates failure or error
@@ -104,7 +104,6 @@ extern status_t status;
 #else
 extern uint8_t status;
 #endif
-extern uint8_t count;
 extern bool option_write;
 extern bool erase_err;
 extern bool write_err;
