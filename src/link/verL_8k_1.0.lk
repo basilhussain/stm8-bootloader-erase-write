@@ -1,4 +1,3 @@
--mwx
 -b PATCH_SEG=0x1EA
 obj/patch_l.rel
 -e
