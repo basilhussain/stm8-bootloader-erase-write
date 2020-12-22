@@ -26,6 +26,7 @@
 
 #ifndef STATUS_STRUCT
 #define STATUS_CAN 1
+#define STATUS_SYNC_SUCCESS 3
 #define STATUS_ERASE_FULL 4
 #define STATUS_WRITE_FLASH_EEPROM 5
 #define STATUS_WRITE_FLASH_BLOCK 6
@@ -49,7 +50,7 @@ typedef struct {
 	bool : 1; // Bit #0 - ??? (Something to do with synchronisation?)
 	bool can : 1; // Bit #1 - Whether using CAN communication
 	bool : 1; // Bit #2 - ??? (Something to do with synchronisation?)
-	bool : 1; // Bit #3 - ??? (Something to do with synchronisation?)
+	bool sync_success : 1; // Bit #3 - Whether synchronisation was successful?
 	bool erase_full : 1; // Bit #4 - Whether a full erase (of all sectors) is being performed
 	bool write_flash_eeprom: 1; // Bit #5 - Whether area being written is flash or EEPROM (i.e. RAM write routine used)?
 	bool write_flash_block : 1; // Bit #6 - Whether doing block-level flash programming
@@ -87,6 +88,7 @@ Addr		Size	Comment
 0x8E		1		status bit flag field
 0x8F		1		temp storage used for calculating checksums
 0x90		1		current sector number for erase - but used by 32K v1.2 bootloader UART transmit func?!
+0x97		1		HSE (external oscillator) clock in use flag - 0x01 = yes, 0x00 = no
 0x98		1		whether option byte writing needs to be enabled - 0x01 = yes, 0x00 = no
 0x9b		1		return status for erase - non-zero value indicates failure or error
 0x9c		1		return status for write - non-zero value indicates failure or error
