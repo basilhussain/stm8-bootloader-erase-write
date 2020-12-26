@@ -12,27 +12,27 @@ static void write_byte(const uint8_t data, const uint16_t idx);
 void write(void) {
 	write_err = false;
 	
-	watchdog_refresh();
-	
 #ifdef STATUS_STRUCT
 	if(status.write_flash_block) {
 #else
 	if(status & (1 << STATUS_WRITE_FLASH_BLOCK)) {
 #endif
 		if(option_write) {
-			// Enable writing of option bytes in addition to block writing.
-			flash_block_prg_option_wr_enable();
+			// Enable block writing while keeping option byte writing enabled.
+			FLASH_CR2  = ((1 << FLASH_CR2_PRG) | (1 << FLASH_CR2_OPT));
+			FLASH_NCR2 = ~((1 << FLASH_NCR2_NPRG) | (1 << FLASH_NCR2_NOPT));
 		} else {
 			// Enable just block writing.
-			flash_block_prg_enable();
+			FLASH_CR2  = (1 << FLASH_CR2_PRG);
+			FLASH_NCR2 = ~(1 << FLASH_NCR2_NPRG);
 		}
 	}
 	
 	option_write = false;
 	
-	// TODO: earliest BL versions call watchdog function here instead. Perhaps add another call?
-	
 	for(uint8_t idx = 0; idx <= data_buf_max; idx++) {
+		watchdog_refresh();
+		
 		write_byte(data_buf[idx], idx);
 		
 		// If not writing a whole block (i.e. byte programming), we must wait
@@ -44,8 +44,6 @@ void write(void) {
 #endif
 			write_err = flash_prg_wait();
 		}
-		
-		watchdog_refresh();
 	}
 	
 	// If we wrote a whole block, wait for programming to complete.

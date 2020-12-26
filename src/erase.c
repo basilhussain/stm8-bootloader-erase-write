@@ -32,7 +32,11 @@ void erase(void) {
 		for(uint8_t i = 0; i < 8; i++) {
 			watchdog_refresh();
 			
-			flash_erase_enable();
+			// Enable flash block erasure.
+			FLASH_CR2  = (1 << FLASH_CR2_ERASE);
+			FLASH_NCR2 = ~(1 << FLASH_NCR2_NERASE);
+
+			// flash_erase_enable();
 			
 			erase_block();
 			

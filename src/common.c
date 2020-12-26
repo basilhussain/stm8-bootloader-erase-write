@@ -11,24 +11,6 @@
 
 /******************************************************************************/
 
-void flash_erase_enable(void) {
-	// Enable flash block erasure.
-	FLASH_CR2  = (1 << FLASH_CR2_ERASE);
-	FLASH_NCR2 = ~(1 << FLASH_NCR2_NERASE);
-}
-
-void flash_block_prg_enable(void) {
-	// Enable flash block writing.
-	FLASH_CR2  = (1 << FLASH_CR2_PRG);
-	FLASH_NCR2 = ~(1 << FLASH_NCR2_NPRG);
-}
-
-void flash_block_prg_option_wr_enable(void) {
-	// Enable writing of option bytes in addition to block writing.
-	FLASH_CR2  = ((1 << FLASH_CR2_PRG) | (1 << FLASH_CR2_OPT));
-	FLASH_NCR2 = ~((1 << FLASH_NCR2_NPRG) | (1 << FLASH_NCR2_NOPT));
-}
-
 bool flash_prg_wait(void) {
 	uint8_t iapsr;
 
@@ -51,13 +33,6 @@ bool flash_prg_wait(void) {
 	} while(!(iapsr & (1 << FLASH_IAPSR_EOP)));
 
 	return false;
-}
-
-uint16_t flash_sector_addr_hl(const uint8_t sector) {
-	// Given a sector number, calculate the high and low byte of the address
-	// in flash it corresponds to. One sector is eight 128 byte blocks
-	// (equalling 1024 bytes).
-	return ((128 * sector) * 8) + 0x8000;
 }
 
 void fill_sector_nums(const uint8_t max_sector) {

@@ -30,6 +30,6 @@ void erase_map_sector_to_addr(const uint8_t sector) {
 			// Flash addr >= 0x01xxxx
 			mem_addr.e = 0x01;
 		}
-		mem_addr.hl = flash_sector_addr_hl(sector);
+		mem_addr.hl = ((128 * sector) * 8) + 0x8000;
 	}
 }
