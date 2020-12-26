@@ -35,8 +35,6 @@ void erase(void) {
 			// Enable flash block erasure.
 			FLASH_CR2  = (1 << FLASH_CR2_ERASE);
 			FLASH_NCR2 = ~(1 << FLASH_NCR2_NERASE);
-
-			// flash_erase_enable();
 			
 			erase_block();
 			
