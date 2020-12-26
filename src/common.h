@@ -25,7 +25,9 @@
 #define FLASH_IAPSR_HVOFF 6
 
 #ifndef STATUS_STRUCT
-#define STATUS_CAN 1
+#define STATUS_SYNC_UART1 0
+#define STATUS_SYNC_CAN 1
+#define STATUS_SYNC_UART3 2
 #define STATUS_SYNC_SUCCESS 3
 #define STATUS_ERASE_FULL 4
 #define STATUS_WRITE_FLASH_EEPROM 5
@@ -47,12 +49,12 @@ typedef struct {
 // are not optimised properly by the compiler (doesn't use BTJT/BTJF instructions),
 // making the code size too big! Can possibly be solved with custom peephole defs.
 typedef struct {
-	bool : 1; // Bit #0 - ??? (Something to do with synchronisation?)
-	bool can : 1; // Bit #1 - Whether using CAN communication
-	bool : 1; // Bit #2 - ??? (Something to do with synchronisation?)
+	bool sync_uart1 : 1; // Bit #0 - Whether using normal UART communication on UART1?
+	bool sync_can : 1; // Bit #1 - Whether using CAN communication - also something to do with sync?!
+	bool sync_uart3 : 1; // Bit #2 - Whether using reply mode UART communication on UART3?
 	bool sync_success : 1; // Bit #3 - Whether synchronisation was successful?
 	bool erase_full : 1; // Bit #4 - Whether a full erase (of all sectors) is being performed
-	bool write_flash_eeprom: 1; // Bit #5 - Whether area being written is flash or EEPROM (i.e. RAM write routine used)?
+	bool write_flash_eeprom : 1; // Bit #5 - Whether area being written is flash or EEPROM (i.e. RAM write routine used)?
 	bool write_flash_block : 1; // Bit #6 - Whether doing block-level flash programming
 	bool checksum_ok : 1; // Bit #7 - Something to do with checksum verification?
 } status_t;
@@ -88,12 +90,16 @@ Addr		Size	Comment
 0x8E		1		status bit flag field
 0x8F		1		temp storage used for calculating checksums
 0x90		1		current sector number for erase - but used by 32K v1.2 bootloader UART transmit func?!
+0x93		1		UART BRR1 baud rate setting value
+0x94		1		UART BRR2 baud rate setting value
+0x95		1		CAN BTR1 baud rate setting value } init for 125 kBps by default, can be changed by SPEED command
+0x96		1		CAN BTR2 baud rate setting value }
 0x97		1		HSE (external oscillator) clock in use flag - 0x01 = yes, 0x00 = no
 0x98		1		whether option byte writing needs to be enabled - 0x01 = yes, 0x00 = no
+0x99		1		bootloader timeout - 0x00 = none, 0x01 = 1 second (location dependent on bootloader version, may be at 0x95)
+0x9A		1		UART 'reply' mode in use - 0x01 = yes, 0x00 = no
 0x9b		1		return status for erase - non-zero value indicates failure or error
 0x9c		1		return status for write - non-zero value indicates failure or error
-0x95		1		} location depending on bootloader version
-0x99		1		} bootloader timeout (0x00 = no timeout, 0x01 = 1 second bootloader timeout)
 */
 
 // Locations are specified at link time according to compatibility with ROM
