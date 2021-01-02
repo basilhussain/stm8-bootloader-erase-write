@@ -1,6 +1,6 @@
 -b ERASE_SEG=0xA0
 -b WRITE_SEG=0x180
--b COMMON_SEG=0x200
+-b COMMON_SEG=0x300
 -g _data_buf=0x00
 -g _data_buf_max=0x88
 -g _mem_addr=0x8A
