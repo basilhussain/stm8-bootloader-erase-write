@@ -1,3 +1,6 @@
+#ifndef COMMON_H_
+#define COMMON_H_
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -111,3 +114,5 @@ extern uint8_t status;
 extern bool option_write;
 extern bool erase_err;
 extern bool write_err;
+
+#endif // COMMON_H_
