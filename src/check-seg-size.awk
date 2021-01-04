@@ -8,7 +8,7 @@ BEGIN {
 	prev_seg_size = 0;
 	
 	reserved[0x200, 0x2FF] = "RESERVED";
-	reserved[0x3C0, 0x3FF] = "STACK";
+	reserved[0x3C0, 0x17FF] = "STACK";
 	reserved[0x4000, 0x47FF] = "EEPROM";
 	reserved[0x8000, 0x27FFF] = "FLASH";
 }
