@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/sh 
 
 # change to current working directory
 cd `dirname $0`
