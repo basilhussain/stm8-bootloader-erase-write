@@ -16,27 +16,40 @@ Therefore an effort has been made to produce open-source erase/write routines th
 
 The erase/write routines are built using a makefile-based build system, and compiled using the [SDCC](http://sdcc.sourceforge.net) compiler. Running a build will produce multiple binary firmware images for all supported device density and bootloader version variants.
 
-Output binaries can be found in the `bin` folder (which will be created if it does not exist). Output files are in [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) format, with extension `.ihx`.
+The build produces two sets of outputs:
+
+* Firmware binaries in [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) format (with `.ihx` extension) in the `bin` folder.
+* C code header include files (with `.h` extension) in the `inc` folder. These files encode the contents of each `.ihx` as a static array of bytes, and are intended for embedding in another program (i.e. stm8gal).
+
+Output folders are created if they do not already exist.
 
 ## Prerequisites
 
 * SDCC C compiler
 * GNU Make
 * GNU Awk (or compatible)
+* XXD
 
 ## Linux (or Unix-like)
 
-From within the `src` folder, run `build.sh` or `make`.
+From within the `src` folder, run `build.sh`.
 
-To remove all output binaries, intermediate object files, etc. run `clean.sh` or `make clean`, again from within the `src` folder.
+To remove all output binaries, intermediate object files, etc. run `clean.sh`, again from within the `src` folder.
 
 ## Windows
 
+**Important:** First run `setenv.bat` in the `src` folder. This will open a new command prompt window with the environment set up appropriately for performing the build. All build commands *must* be executed from this command prompt window.
+
 From within the `src` folder, run `build.bat`.
 
-To remove all output binaries, intermediate object files, etc. run `clean.bat `, again from within the `src` folder.
+To remove all output binaries, intermediate object files, etc. run `clean.bat`, again from within the `src` folder.
 
-**Note:** building on Windows utilises the `mingw32-make` utility supplied by [Mingw-w64](http://mingw-w64.org) as well as Awk from [GnuWin](http://gnuwin32.sourceforge.net/packages/gawk.htm). Please check that the paths to them in the `build.bat`, `clean.bat` and `check-seg-size.bat` files match your environment; edit their paths in those files if necessary.
+**Note:** The versions of build tooling assumed are as follows:
+
+* `mingw32-make` from [Mingw-w64](http://mingw-w64.org)
+* `gawk` from [GnuWin](http://gnuwin32.sourceforge.net/packages/gawk.htm)
+
+Please check that the paths to them in the `setenv.bat` file matches your environment; edit their paths in that file if necessary.
 
 # Supported Devices
 

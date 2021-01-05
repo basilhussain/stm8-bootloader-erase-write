@@ -30,25 +30,31 @@ LINKCOMMON = \
 	$(LINKDIR)/common.lk
 BINDIR = bin
 BINARIES = $(patsubst $(LINKDIR)/%.lk,$(BINDIR)/erase_write_%.ihx,$(LINKTARGETS))
+INCDIR = inc
+HEADERS = $(patsubst $(LINKDIR)/%.lk,$(INCDIR)/erase_write_%_inc.h,$(LINKTARGETS))
 ifeq ($(OS),Windows_NT)
 	RM = cmd.exe /C del /Q
-	MKDIRFLAGS =
+	MKDIR = mkdir
+	AWK = gawk
+	CAT = type
 else
 	RM = rm -fr
-	MKDIRFLAGS = -p
+	MKDIR = mkdir -p
+	AWK = awk
+	CAT = cat
 endif
 
 .PHONY: all clean
 
-all: $(BINARIES)
+all: $(HEADERS)
+
+$(HEADERS): $(BINARIES) $(INCDIR)
+	$(CAT) inc_header.txt > $@
+	xxd -i $(patsubst $(INCDIR)/%_inc.h,$(BINDIR)/%.ihx,$@) >> $@
 
 $(BINARIES): $(LINKCOMMON) $(LINKTARGETS) $(OBJECTS) $(BINDIR)
 	$(LD) $(LDFLAGS) -i $@ -f $(LINKDIR)/common.lk -f $(LINKDIR)/$(patsubst erase_write_%.ihx,%.lk,$(notdir $@))
-ifeq ($(OS),Windows_NT)
-	check-seg-size.bat $(BINDIR)/$(basename $(@F)).map
-else
-	awk -f ./check-seg-size.awk $(BINDIR)/$(basename $(@F)).map
-endif
+	$(AWK) -f check-seg-size.awk $(BINDIR)/$(basename $(@F)).map
 
 $(OBJECTS): $(SOURCES) $(OBJDIR)
 
@@ -58,12 +64,16 @@ $(OBJDIR)/%.rel: %.c
 $(OBJDIR)/%.rel: %.s
 	$(AS) $(ASFLAGS) $@ $(basename $(<F)).s
 
+$(INCDIR):
+	$(MKDIR) $(INCDIR)
+
 $(OBJDIR):
-	mkdir $(MKDIRFLAGS) $(OBJDIR)
+	$(MKDIR) $(OBJDIR)
 
 $(BINDIR):
-	mkdir $(MKDIRFLAGS) $(BINDIR)
+	$(MKDIR) $(BINDIR)
 
 clean:
+	$(RM) $(INCDIR)
 	$(RM) $(OBJDIR)
 	$(RM) $(BINDIR)
