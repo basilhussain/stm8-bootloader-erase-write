@@ -67,6 +67,33 @@ STM8L and STM8AL series devices contain their own in-built erase/write routines 
 
 († The built-in erase/write routines require a patch for this series, density and version, which this project also provides.)
 
+# In-Memory Code Layout
+
+When the bootloader wants to erase or write data in flash or EEPROM, it calls upon functions that have been placed in RAM. An area of RAM is reserved for these routines between addresses `0xA0` and `0x1FF`.
+
+When either of the erase or write functions are called by the bootloader, it does so at a fixed address. The addresses vary by bootloader version:
+
+| Function | 2.0     | 2.1     | 2.2     | 2.4     | 1.0     | 1.2     | 1.3     | 1.4     |
+| -------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
+| Erase    | `0xA0`  | `0xA0`  | `0xA0`  | `0xA0`  | `0xA0`  | `0xA0`  | `0xA0`  | `0xA0`  |
+| Write    | `0x162` | `0x180` | `0x180` | `0x180` | `0x12f` | `0x150` | `0x150` | `0x150` |
+
+Due to the fact that our RAM routines are written in C, it is an unfortunate fact that the compiled size of the code is not quite as compact as the original ST routines (hand-written in assembly). This posed problems, particularly with respect to fitting the erase functionality in the smaller area used by the earliest bootloader versions (1.0 and 2.0). It meant that some code would have to reside beyond `0x1FF`. This is feasible, as the bootloader itself uses only `0x0` to `0x9F` for its own variables, and nothing beyond `0x1FF`.
+
+What was decided was to break out some of the common code shared between erase and write functions and place it at `0x300`, leaving the range `0x200`-`0x2FF` free. Why? To support adding additional capabilities to stm8gal for so-called 'plug-in' features that will allow for actions other than the bootloader's standard 'read', 'write' and 'erase' commands. This would be accomplished by uploading (using the 'write' command) custom code temporarily to `0x200` and then jumping to it using the 'go' command. Any 'return' or result data can be read back from memory using subsequent 'read' commands.
+
+With common code residing at `0x300` and above, care however must be taken not to run into any RAM used by the stack during operation (stack starts at top of RAM and expands downwards). Taking as a worst-case scenario of some STM8 devices having only 1KB of RAM, where the stack begins at `0x3FF`, it was decided to allow 64 bytes for the stack (because the bootloader itself and these RAM routines make very little use of the stack) and set an upper limit for common code of `0x3BF`.
+
+To summarise, the overall memory layout adopted by these RAM routines is as follows:
+
+| Start Address | End Address | Purpose                                 |
+| ------------- | ----------- | --------------------------------------- |
+| `0xA0`        | `0x1FF`     | Erase and write functions               |
+| `0x200`       | `0x2FF`     | Reserved for auxilliary 'plug-in' code† |
+| `0x300`       | `0x3BF`     | Common shared code                      |
+
+(† Any static/global variables used by such code shall also reside in this area.)
+
 # Testing
 
 These erase/write RAM routines have been tested and found to work without problem on the following devices.
