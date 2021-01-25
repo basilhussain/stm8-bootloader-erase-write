@@ -96,7 +96,7 @@ To summarise, the overall memory layout adopted by these RAM routines is as foll
 
 # Testing
 
-These erase/write RAM routines have been tested and found to work without problem on the following devices.
+These erase/write RAM routines have initially been tested and found to work without problem on the following devices.
 
 | Device     | Board                                                                          | Bootloader Version |
 | ---------- | ------------------------------------------------------------------------------ | ------------------ |
@@ -106,7 +106,7 @@ These erase/write RAM routines have been tested and found to work without proble
 | STM8S105C6 | [STM8S Discovery](https://www.st.com/en/evaluation-tools/stm8s-discovery.html) | 1.2                |
 | STM8S105K6 | [Sduino Uno](https://github.com/roybaer/sduino_uno)                            | 1.3                |
 
-Reports of successful usage or testing on any other devices or bootloader versions are appreciated. Please create a GitHub issue with your feedback.
+For more details, please see the [Test Overview](https://github.com/gicking/stm8gal#test-overview) information from the [stm8gal](https://github.com/gicking/stm8gal) project.
 
 ## Call for Devices
 
