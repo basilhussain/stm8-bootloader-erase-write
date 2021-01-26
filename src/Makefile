@@ -48,7 +48,7 @@ endif
 
 all: $(HEADERS)
 
-$(HEADERS): $(BINARIES) $(INCDIR)
+$(HEADERS): $(BINARIES) $(INCDIR) inc_header.txt
 	$(CAT) inc_header.txt > $@
 	xxd -i $(patsubst $(INCDIR)/%_inc.h,$(BINDIR)/%.ihx,$@) >> $@
 
